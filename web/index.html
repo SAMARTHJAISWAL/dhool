@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>dhool · falling-sand sandbox</title>
+    <meta name="description" content="A falling-sand physics sandbox. The cellular automaton is written in Rust and runs as a 36 KB WebAssembly module." />
+    <meta name="theme-color" content="#110e0c" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="dhool (धूल) · falling-sand sandbox" />
+    <meta property="og:description" content="Pour sand, water, oil, fire, acid and lava. A Rust cellular automaton compiled to WebAssembly." />
+    <meta property="og:url" content="https://samarthjaiswal.github.io/dhool/" />
+    <meta property="og:image" content="https://samarthjaiswal.github.io/dhool/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="bar">
+        <h1 class="brand">
+          <span class="brand-latin">dhool</span>
+          <span class="brand-deva" lang="hi">धूल</span>
+          <span class="brand-gloss">dust, in Hindi</span>
+        </h1>
+        <div class="transport" role="toolbar" aria-label="Simulation controls">
+          <button type="button" id="play" class="btn btn-primary" aria-keyshortcuts="Space" aria-pressed="false">
+            <svg class="icon icon-pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" /><rect x="9.5" y="2.5" width="3" height="11" rx="1" /></svg>
+            <svg class="icon icon-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7Z" /></svg>
+            <span class="label">Pause</span>
+          </button>
+          <button type="button" id="step" class="btn" aria-keyshortcuts="." title="Step one tick (.)">
+            <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.8v10.4a.8.8 0 0 0 1.2.7l6.3-5.2a.8.8 0 0 0 0-1.4L4.2 2.1A.8.8 0 0 0 3 2.8Z" /><rect x="11.5" y="2.5" width="2" height="11" rx="1" /></svg>
+            <span class="label">Step</span>
+          </button>
+          <button type="button" id="clear" class="btn" title="Empty the grid">
+            <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h11M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M4 4.5l.7 8.6a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9l.7-8.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <span class="label">Clear</span>
+          </button>
+          <button type="button" id="share" class="btn" title="Copy a link to this scene">
+            <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2l-.8.8M9.4 6.6a3 3 0 0 0-4.2 0L2.9 8.9a3 3 0 0 0 4.2 4.2l.8-.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+            <span class="label">Share</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="stage" id="stage">
+        <canvas id="world" role="img" aria-label="Falling-sand simulation. Drag to paint the selected material; right-click to erase."></canvas>
+        <p class="badge" id="paused-badge" hidden>Paused</p>
+        <div class="intro" id="intro" role="dialog" aria-labelledby="intro-title" hidden>
+          <h2 id="intro-title">Pour something</h2>
+          <p>Drag on the canvas to paint. Right-click, or pick the eraser, to remove.</p>
+          <p><kbd>1</kbd>–<kbd>0</kbd> choose materials, <kbd>[</kbd> <kbd>]</kbd> resize the brush, <kbd>Space</kbd> pauses, <kbd>.</kbd> steps one tick.</p>
+          <button type="button" class="btn btn-primary" id="intro-ok">Got it</button>
+        </div>
+        <p class="toast" id="toast" role="status" aria-live="polite"></p>
+      </main>
+
+      <aside class="panel" aria-label="Tools">
+        <section class="group">
+          <h2 class="group-title" id="palette-title">Materials</h2>
+          <div class="palette" id="palette" role="radiogroup" aria-labelledby="palette-title"></div>
+          <button type="button" class="btn btn-wide" id="eraser" aria-pressed="false" aria-keyshortcuts="E">
+            <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m9.2 2.6 4.2 4.2a1 1 0 0 1 0 1.4L8 13.6H4.6L2.6 11.6a1 1 0 0 1 0-1.4l5.2-5.2 1.4-1.4ZM5.4 7.4l4.2 4.2M8 13.6h5.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" /></svg>
+            <span>Eraser</span><kbd>E</kbd>
+          </button>
+        </section>
+
+        <section class="group">
+          <div class="row">
+            <label class="group-title" for="brush">Brush</label>
+            <output id="brush-out" for="brush">4</output>
+          </div>
+          <input type="range" id="brush" min="0" max="24" value="4" aria-keyshortcuts="[ ]" />
+        </section>
+
+        <section class="group">
+          <h2 class="group-title" id="speed-title">Speed</h2>
+          <div class="segmented" id="speed" role="radiogroup" aria-labelledby="speed-title"></div>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">Scenes</h2>
+          <div class="presets" id="presets"></div>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">Stats</h2>
+          <dl class="meters">
+            <div><dt>FPS</dt><dd id="fps">0</dd></div>
+            <div><dt>Ticks/s</dt><dd id="tps">0</dd></div>
+            <div><dt>Grid</dt><dd id="grid">0×0</dd></div>
+          </dl>
+          <p class="hover" id="hover" aria-live="off">&nbsp;</p>
+          <ul class="counts" id="counts"></ul>
+        </section>
+
+        <footer class="foot">
+          <p>Rust → WebAssembly, no wasm-bindgen. <a href="https://github.com/SAMARTHJAISWAL/dhool">Source on GitHub</a></p>
+        </footer>
+      </aside>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
