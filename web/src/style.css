@@ -69,6 +69,39 @@ body {
   font-weight: 600;
 }
 
+.brand-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.brand-gh {
+  width: 15px;
+  height: 15px;
+  align-self: center;
+  fill: currentColor;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+
+.brand-link:hover .brand-gh,
+.brand-link:focus-visible .brand-gh {
+  opacity: 1;
+}
+
+.brand-link:hover .brand-latin {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.brand-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .brand-latin {
   font-family: var(--mono);
   font-size: 22px;
@@ -611,4 +644,16 @@ input[type='range'] {
     animation: none !important;
     transition: none !important;
   }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
