@@ -1,0 +1,7 @@
+/target
+/node_modules
+/dist
+# Build output copied in by scripts/build-wasm.mjs
+/web/src/wasm/
+*.log
+.DS_Store
